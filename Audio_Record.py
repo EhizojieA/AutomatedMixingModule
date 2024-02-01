@@ -50,7 +50,7 @@ soundfile.setnchannels(1)
 soundfile.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
 soundfile.setframerate(44100)
 soundfile.writeframes(b''.join(frames))
-
+soundfile.close()
 
 #Digital signal from microphone intake
 
