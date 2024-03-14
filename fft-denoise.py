@@ -2,13 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
 
-a = wavfile.read('sample-impulse.wav')
+a = wavfile.read('SampleRecording.wav')
 a = np.array(a[1], dtype=float)
 impulse_length = len(a)
 timescale_a = np.arange(0, impulse_length, 1)
 print (impulse_length)
 
-b = wavfile.read('SampleRecording.wav')
+b = wavfile.read('sample-impulse.wav')
 b = np.array(b[1], dtype=float)
 
 #compute the fft
@@ -18,6 +18,14 @@ fhat = np.fft.fft(a, n)
 PSD = fhat * np.conj(fhat) / n
 freq = (1 / (0.01 * n)) * np.arange(n)
 L = np.arange(1, np.floor(n/2), dtype= 'int')
+
+indices = PSD > 1.0
+PSDclean = PSD * indices
+fhat = indices * fhat
+inversefft = np.fft.ifft(fhat)
+
+
+
 
 #timescale_a = timescale_a.reshape(a.shape)
 
