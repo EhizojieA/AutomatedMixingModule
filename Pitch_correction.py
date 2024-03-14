@@ -60,7 +60,7 @@ def autotune(y, sr):
 
 
 def main():
-    y, sr = librosa.load('SampleRecording.wav', sr=None, mono=False)
+    y, sr = librosa.load('SampleRecording.wav', sr=None, mono=True)
 
     if y.ndim > 1:  # if more than 1 channel exists, y will be reassigned to take in the first channel
         y = y[0, :]
@@ -70,7 +70,7 @@ def main():
     filepath = Path('SampleRecording.wav')
     output_filepath = filepath.parent / (filepath.stem + '_corrected' + filepath.suffix)
     #sf.write(file=str(output_filepath), data= pitch_correct, samplerate= 440)
-    sf.write(str(output_filepath), pitch_correct, sr )
+    sf.write(str(output_filepath), pitch_correct, sr, )
 
 
 if __name__ == '__main__':

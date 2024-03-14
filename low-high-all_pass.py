@@ -1,6 +1,5 @@
 from scipy import signal
 import numpy as np
-import pyaudio
 import sounddevice as sd
 import pyaudio
 
@@ -10,7 +9,7 @@ import pyaudio
 sampling_rate = 44100
 test_time = 5
 enable_highpass = False
-amplitude = 0.3
+amplitude = 0.9
 p = pyaudio.PyAudio()
 FORMAT = pyaudio.paInt16
 
