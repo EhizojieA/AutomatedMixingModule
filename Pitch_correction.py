@@ -70,7 +70,7 @@ def main():
     filepath = Path('SampleRecording.wav')
     output_filepath = filepath.parent / (filepath.stem + '_corrected' + filepath.suffix)
     #sf.write(file=str(output_filepath), data= pitch_correct, samplerate= 440)
-    sf.write(str(output_filepath), pitch_correct, sr, )
+    sf.write(str(output_filepath), pitch_correct, sr)
 
 
 if __name__ == '__main__':
