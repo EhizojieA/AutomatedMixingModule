@@ -4,19 +4,14 @@ from PyQt5.QtMultimedia import QSound, QMultimedia, QMediaPlayer, QMediaContent
 from PyQt5.QtCore import QUrl
 import numpy as np
 import pyaudio
-import struct
 import matplotlib.pyplot as plt
 import wave
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 import struct
 from matplotlib import pyplot
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from scipy.io import wavfile
-from PyQt5.QtGui import QPixmap
 from secondwindow import Second_Ui_MainWindow
 import simpleaudio as sa
-
+import librosa
 
 list = []
 track_array = np.empty([20, 20])
@@ -27,13 +22,22 @@ class Ui_MainWindow(object):
         self.window = QtWidgets.QMainWindow()
         self.ui = Second_Ui_MainWindow()
         self.ui.setupUi(self.window)
+        #self.ui.tableWidget1.setItem(self.tableWidget)
         self.window.show()
 
     def copyToNew(self):
-        pass
-      #  thing = self.tableWidget
-       # self.ui = Second_Ui_MainWindow()
-        #self.ui.tableWidget1.setItem(thing)
+        #pass
+        #thing = self.Waveform_Tools.selectedItems()
+
+        selected_files = self.Waveform_Tools.selectedItems()
+
+        row = 0
+        for n in selected_files:
+            self.ui.tableWidget_1.setRowCount(len(selected_files))
+            self.ui.tableWidget_1.setItem(row, 0,  QtWidgets.QTableWidgetItem(str(n.text())))
+            row += 1
+        print(n.text())
+        print(len(selected_files))
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -156,6 +160,12 @@ class Ui_MainWindow(object):
         self.Copy_to_new.setIconSize(QtCore.QSize(30, 23))
         self.Copy_to_new.setObjectName("Copy Table to New Window")
         self.Copy_to_new.setEnabled(False)
+
+        self.Record_New = QtWidgets.QPushButton(self.Music_Player_Background, clicked=lambda: self.recordNew())
+        self.Record_New.setGeometry(QtCore.QRect(440, 20, 50, 32))
+        self.Record_New.setIconSize(QtCore.QSize(30, 23))
+        self.Record_New.setObjectName("Record New Wav file")
+        #self.Record_New.setEnabled(True)
 
 
         self.gridLayout.addWidget(self.widget, 0, 0, 2, 1)
@@ -294,8 +304,10 @@ class Ui_MainWindow(object):
 
 
                 self.Waveform_Tools.setItem(row, 0, QtWidgets.QTableWidgetItem(str(n)))
+                #self.ui.tableWidget1.setItem(row, 0, QtWidgets.QTableWidgetItem(str(n)))
                 self.tableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(str(len(data.shape))))
                 self.tableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(str((n) + '.png')))
+
 
 
                 #self.ui.tableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(str(len(data.shape))))
@@ -315,6 +327,7 @@ class Ui_MainWindow(object):
             self.Copy_to_new.setEnabled(True)
 
 
+
     def play(self):
         #row = self.tableWidget.currentRow()
         #column = self.tableWidget.currentColumn()
@@ -329,12 +342,113 @@ class Ui_MainWindow(object):
         #filename = QtWidgets.QTableWidgetItem.tableWidget().itemAt(filename)
         #print(filename)
 
+
+        #Report average amplitude per second of played audio
+        y, sr = librosa.load(n.text())
+        second = []
+        for i in range(0, len(y), sr):
+            second.append(np.max(y[i:i + sr]).mean())
+        print(second)
+        #################
+
         try:
             wave_object = sa.WaveObject.from_wave_file(n.text())
             play_object = wave_object.play()
             play_object.wait_done()
         except KeyboardInterrupt:
             pass
+
+    def recordNew(self):
+
+        CHUNK = 1024 * 2
+        FRAMES = 1024
+        FORMAT = pyaudio.paInt16
+        CHANNELS = 1
+        RATE = 44100
+
+        # PyAudio chunk of code to read input from USB
+        audio = pyaudio.PyAudio()
+
+        ##Opening of audio stream
+        auStream = audio.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True,
+                              frames_per_buffer= CHUNK)
+        frames = []
+
+        fig, ax = plt.subplots()
+        x = np.arange(0, 2 * CHUNK, 2)
+        line, = ax.plot(x, np.random.rand(CHUNK), 'r')
+        ax.set_ylim(-60000, 60000)
+        ax.set_xlim(0, CHUNK)
+        fig.show()
+
+        # Same as R's Try, will perform the process below and check for an error
+        # if there is an error it will stop and present the error.
+        try:
+            while True:
+                data = auStream.read(FRAMES, exception_on_overflow=False)
+                frames.append(data)
+
+                auStream.start_stream()
+                mic_rec_data = auStream.read(CHUNK, exception_on_overflow=False)
+                mic_rec_int = struct.unpack(str(CHUNK) + 'h', mic_rec_data)
+                line.set_ydata(mic_rec_int)
+                fig.canvas.draw()
+                fig.canvas.flush_events()
+
+        # Will change the interrupt to another button later when User interface is established
+        # except ends the try block. Gives a condition when to stop.
+        except KeyboardInterrupt:
+
+            ##Closing audio stream
+            auStream.stop_stream()
+            auStream.close()
+            audio.terminate()
+
+            # Writing the sound file
+            soundfile = wave.open("SampleRecording.wav", "wb")
+            soundfile.setnchannels(CHANNELS)
+            soundfile.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
+            soundfile.setframerate(RATE)
+            soundfile.writeframes(b''.join(frames))
+            soundfile.close()
+            print("Finished Recording")
+            pass
+
+        #p = pyaudio.PyAudio()
+
+        #stream = audio.open(
+        #    format=FORMAT,
+        #    channels=CHANNELS,
+        #    rate=RATE,
+        #    input=True,
+        #    output=True,
+        #    frames_per_buffer=CHUNK)
+
+        # mic_rec_data = stream.read(CHUNK)
+        # mic_rec_int = struct.unpack(str(CHUNK) + 'h', mic_rec_data)
+        # print(mic_rec_int)
+
+        #fig, ax = plt.subplots()
+        #x = np.arange(0, 2 * CHUNK, 2)
+        #line, = ax.plot(x, np.random.rand(CHUNK), 'r')
+        #ax.set_ylim(-60000, 60000)
+        #ax.set_xlim(0, CHUNK)
+        #fig.show()
+
+       # try:
+        #    while True:
+         #       auStream.start_stream()
+          #      mic_rec_data = auStream.read(CHUNK, exception_on_overflow=False)
+           #     mic_rec_int = struct.unpack(str(CHUNK) + 'h', mic_rec_data)
+            #    line.set_ydata(mic_rec_int)
+             #   fig.canvas.draw()
+              #  fig.canvas.flush_events()
+
+        #except KeyboardInterrupt:
+         #   print("Exiting Real-time graph")
+          #  pass
+
+
 
 
 
