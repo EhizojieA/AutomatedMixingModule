@@ -27,6 +27,9 @@ import soundfile as sf
 class Second_Ui_MainWindow(object):
 
     list = []
+    files_over_limit = []
+    files_below_limit = []
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
@@ -284,6 +287,8 @@ class Second_Ui_MainWindow(object):
         list = []
         other_arrays = []
         other_arrays_values = []
+        files_over_limit = []
+        files_below_limit = []
         row = 0
         #pass
         if self.comboBox_3.currentText() == '1':
@@ -336,8 +341,36 @@ class Second_Ui_MainWindow(object):
             #print(other_arrays)
         for n in other_arrays:
             other_arrays_values.append(np.array(n[1], dtype=float))
+            #other_arrays.pop(0)
 
         print(other_arrays_values)
+
+        for n in range(len(other_arrays_values)):
+            x = other_arrays_values[n]
+            if np.max(other_arrays_values[0]) - np.min(other_arrays_values[0]) >= np.max(primary_array) - np.min(primary_array):
+                print("Yes" + x)
+                print(list[n])
+                files_over_limit.append(list[n])
+
+            else:
+                print(x)
+                print(list[n])
+                files_below_limit.append(list[n])
+
+            #print(other_arrays_values[i] + 'is greater')
+            #print(np.max(other_arrays_values[n]) - np.min(other_arrays_values[n]))
+
+            #for i in other_arrays_values:
+            #    print(np.max(other_arrays_values[n]) - np.min(other_arrays_values[n]))
+            #for i in range(len(other_arrays_values[0])):
+                #print(np.max(other_arrays_values[0]) - np.min(other_arrays_values[0]))
+                #if np.max(other_arrays_values[0]) - np.min(other_arrays_values[0]) >= np.max(primary_array) - np.min(primary_array):
+                    #print(other_arrays_values[i] + 'is greater')
+                #print(np.max(primary_array))\
+        print('For Loop Finished')
+        print("These are the files over the limit" + str(files_over_limit))
+        print("These are the files under the limit" + str(files_below_limit))
+        #return files_over_limit, files_below_limit
 
         #list.remove(str(primary_array))
         #print(list)
@@ -350,6 +383,10 @@ class Second_Ui_MainWindow(object):
         #print(primary_array)
 
         #print(list[0])
+
+    def automateAudio(self):
+        pass
+        #print(files_over_limit)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
