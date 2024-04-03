@@ -18,12 +18,15 @@ from scipy.io import wavfile
 from PyQt5.QtGui import QPixmap
 import simpleaudio as sa
 import sounddevice as sd
-#from pydub import AudioSegment
+from pydub import AudioSegment
 #import math
+import soundfile as sf
 
 #AudioSegment.converter = '/Users/ehizojiealli/anaconda3/envs/AutomatedMixing/lib/python3.8/site-packages/ffmpeg'
 
 class Second_Ui_MainWindow(object):
+
+    list = []
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
@@ -147,26 +150,31 @@ class Second_Ui_MainWindow(object):
         self.comboBox = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox.setGeometry(QtCore.QRect(580, 160, 103, 32))
         self.comboBox.setObjectName("comboBox")
-        self.comboBox.addItem("")
-        self.comboBox.addItem("")
-        self.comboBox.addItem("")
-        self.comboBox.addItem("")
+
+        #self.comboBox.addItem("1")
+        #self.comboBox.addItem("2")
+        #self.comboBox.addItem("3")
+        #self.comboBox.addItem("4")
         self.comboBox_2 = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox_2.setGeometry(QtCore.QRect(580, 40, 103, 32))
         self.comboBox_2.setObjectName("comboBox_2")
         self.comboBox_3 = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox_3.setGeometry(QtCore.QRect(580, 80, 103, 32))
         self.comboBox_3.setObjectName("comboBox_3")
+        self.comboBox_3.addItem('1')
+        self.comboBox_3.addItem('2')
+        self.comboBox_3.addItem('3')
+        self.comboBox_3.addItem('4')
         self.comboBox_4 = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox_4.setGeometry(QtCore.QRect(580, 120, 103, 32))
         self.comboBox_4.setObjectName("comboBox_4")
         self.pushButton = QtWidgets.QPushButton(self.centralwidget, clicked = lambda : self.editAmp())
         self.pushButton.setGeometry(QtCore.QRect(180, 250, 100, 32))
         self.pushButton.setObjectName("pushButton")
-        self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget, clicked = lambda : self.dummyFunction())
+        self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget, clicked = lambda : self.loadFiles())
         self.pushButton_2.setGeometry(QtCore.QRect(180, 300, 100, 32))
         self.pushButton_2.setObjectName("pushButton_2")
-        self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget, clicked = lambda : self.loadPriority())
         self.pushButton_3.setGeometry(QtCore.QRect(180, 350, 100, 32))
         self.pushButton_3.setObjectName("pushButton_3")
         self.pushButton_4 = QtWidgets.QPushButton(self.centralwidget)
@@ -205,30 +213,56 @@ class Second_Ui_MainWindow(object):
         selected_edits = self.tableWidget_1.selectedItems()
         row = 0
         s = 0
+        list = []
         for n in selected_edits:
             wavfile.read(n.text())
+            list.append(n.text())
 
             #working_file = wavfile.read(n.text())
             #working_file = np.array(working_file[1], dtype=float)
             y , sr =librosa.load(n.text())
+            #y = np.array(y, dtype=float)
             #average_amp = y[s:s+sr].mean()
             #print('The average amplitude is' +' '+ average_amp)
             absolute_average_amp = np.abs(y[s:s+sr].mean())
             print('The absolute average amplitude is' + ' ' + str(absolute_average_amp))
 
-            dbs = 20 * np.log10(np.sqrt(np.mean(np.absolute(y)))/absolute_average_amp)
-            print('This is dbs' + ' ' + str(dbs))
+            dbs_SPL = 20 * np.log10(np.sqrt(np.mean(np.absolute(y**2)))/absolute_average_amp)
+            print('This is dbs' + ' ' + str(dbs_SPL))
 
             # dbs = librosa.amplitude_to_db(working_file)
             #print(type(working_file))
 
             #dbs = 20 * np.log10(np.sqrt(np.mean(np.absolute(working_file))))
-            self.tableWidget_1.setItem(row, 1, QtWidgets.QTableWidgetItem(str(dbs)))
-            print('Before' + str(y))
-            y += self.verticalSlider.value()
-            print('After' + str(y))
+            self.tableWidget_1.setItem(row, 1, QtWidgets.QTableWidgetItem(str(dbs_SPL)))
+            #print('Before' + str(y))
+            #y = np.add(y, 1)
+            #print(y)
+            #y = [x + self.verticalSlider.value() for x in y]
+            #print(y)
+            #y = np.array(y + self.verticalSlider.value())
+            #y += self.verticalSlider.value()
+            #print(y)
+            #y += self.verticalSlider.value()
+            #print(y)
+            #print(type(y))
+            #print(self.verticalSlider.value())
+            #print('After' + str(y))
+            #print(y+ 1)
+
             row += 1
             #print('This is dbs' + ' ' + str(dbs))
+            edit = n.text()
+            song = AudioSegment.from_wav(edit)
+            song += self.verticalSlider.value()
+            song.export('PyDub-change.wav', 'wav')
+
+        print(list[0])
+
+
+        #wavfile.write('volume-control-sample.wav', sr, np.array(y, dtype=float))
+        #sf.write('volume-control-sample.wav', data=y, samplerate=sr)
+        #wavfile.write('volume-control-sample.wav', sr, y)
 
         #dbA = AudioSegment.from_wav(n.text())
         #print("Below is dbA")
@@ -241,6 +275,81 @@ class Second_Ui_MainWindow(object):
     def dummyFunction(self):
         print(self.verticalSlider.value())
         print(type(self.verticalSlider.value()))
+
+    def loadFiles(self):
+        for n in self.tableWidget_1.selectedItems():
+            self.comboBox_2.addItem(str(n.text()))
+
+    def loadPriority(self):
+        list = []
+        other_arrays = []
+        other_arrays_values = []
+        row = 0
+        #pass
+        if self.comboBox_3.currentText() == '1':
+            self.tableWidget_1.setItem(0, 2, QtWidgets.QTableWidgetItem('Yes'))
+            self.tableWidget_1.setItem(1, 2, QtWidgets.QTableWidgetItem(''))
+            self.tableWidget_1.setItem(2, 2, QtWidgets.QTableWidgetItem(''))
+            self.tableWidget_1.setItem(3, 2, QtWidgets.QTableWidgetItem(''))
+        elif self.comboBox_3.currentText() == '2':
+            self.tableWidget_1.setItem(0, 2, QtWidgets.QTableWidgetItem(''))
+            self.tableWidget_1.setItem(1, 2, QtWidgets.QTableWidgetItem('Yes'))
+            self.tableWidget_1.setItem(2, 2, QtWidgets.QTableWidgetItem(''))
+            self.tableWidget_1.setItem(3, 2, QtWidgets.QTableWidgetItem(''))
+        elif self.comboBox_3.currentText() == '3':
+            self.tableWidget_1.setItem(0, 2, QtWidgets.QTableWidgetItem(''))
+            self.tableWidget_1.setItem(1, 2, QtWidgets.QTableWidgetItem(''))
+            self.tableWidget_1.setItem(2, 2, QtWidgets.QTableWidgetItem('Yes'))
+            self.tableWidget_1.setItem(3, 2, QtWidgets.QTableWidgetItem(''))
+        elif self.comboBox_3.currentText() == '4':
+            self.tableWidget_1.setItem(0, 2, QtWidgets.QTableWidgetItem(''))
+            self.tableWidget_1.setItem(1, 2, QtWidgets.QTableWidgetItem(''))
+            self.tableWidget_1.setItem(2, 2, QtWidgets.QTableWidgetItem(''))
+            self.tableWidget_1.setItem(3, 2, QtWidgets.QTableWidgetItem('Yes'))
+
+        #selected_edits = self.tableWidget_1.selectedItems()
+
+        for n in self.tableWidget_1.selectedItems():
+            list.append(n.text())
+
+        if self.comboBox_3.currentText() == '1':
+            primary_array = list[0]
+        elif self.comboBox_3.currentText() == '2':
+            primary_array = list[1]
+        elif self.comboBox_3.currentText() == '3':
+            primary_array = list[2]
+        elif self.comboBox_3.currentText() == '4':
+            primary_array = list[3]
+
+        #print("This is the primary file used for the array below" + '' +primary_array)
+
+        print(list)
+
+        list.remove(str(primary_array))
+        print(list)
+        primary_array = wavfile.read(primary_array)
+        primary_array = np.array(primary_array[1], dtype=float)
+
+        for n in list:
+            #print(n)
+            other_arrays.append(wavfile.read(n))
+            #print(other_arrays)
+        for n in other_arrays:
+            other_arrays_values.append(np.array(n[1], dtype=float))
+
+        print(other_arrays_values)
+
+        #list.remove(str(primary_array))
+        #print(list)
+
+
+        #primary_array ,sr = librosa.load(primary_array, mono=False)
+
+
+
+        #print(primary_array)
+
+        #print(list[0])
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -258,9 +367,9 @@ class Second_Ui_MainWindow(object):
         self.comboBox.setItemText(1, _translate("MainWindow", "2"))
         self.comboBox.setItemText(2, _translate("MainWindow", "3"))
         self.comboBox.setItemText(3, _translate("MainWindow", "New Item"))
-        self.pushButton.setText(_translate("MainWindow", "PushButton"))
+        self.pushButton.setText(_translate("MainWindow", "Volume exit"))
         self.pushButton_2.setText(_translate("MainWindow", "PushButton"))
-        self.pushButton_3.setText(_translate("MainWindow", "PushButton"))
+        self.pushButton_3.setText(_translate("MainWindow", "Priority"))
         self.pushButton_4.setText(_translate("MainWindow", "PushButton"))
         self.pushButton_5.setText(_translate("MainWindow", "PushButton"))
         self.pushButton_6.setText(_translate("MainWindow", "PushButton"))
