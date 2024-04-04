@@ -21,14 +21,15 @@ import sounddevice as sd
 from pydub import AudioSegment
 #import math
 import soundfile as sf
+import ffmpeg
 
 #AudioSegment.converter = '/Users/ehizojiealli/anaconda3/envs/AutomatedMixing/lib/python3.8/site-packages/ffmpeg'
 
+list = []
+files_over_limit = []
+files_below_limit = []
+auto_edited = []
 class Second_Ui_MainWindow(object):
-
-    list = []
-    files_over_limit = []
-    files_below_limit = []
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -180,9 +181,10 @@ class Second_Ui_MainWindow(object):
         self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget, clicked = lambda : self.loadPriority())
         self.pushButton_3.setGeometry(QtCore.QRect(180, 350, 100, 32))
         self.pushButton_3.setObjectName("pushButton_3")
-        self.pushButton_4 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_4 = QtWidgets.QPushButton(self.centralwidget, clicked = lambda : self.automateAudio())
         self.pushButton_4.setGeometry(QtCore.QRect(310, 250, 100, 32))
         self.pushButton_4.setObjectName("pushButton_4")
+        self.pushButton_4.setEnabled(False)
         self.pushButton_5 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_5.setGeometry(QtCore.QRect(310, 300, 100, 32))
         self.pushButton_5.setObjectName("pushButton_5")
@@ -211,12 +213,10 @@ class Second_Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def editAmp(self):
-
-
         selected_edits = self.tableWidget_1.selectedItems()
         row = 0
         s = 0
-        list = []
+        #list = []
         for n in selected_edits:
             wavfile.read(n.text())
             list.append(n.text())
@@ -287,8 +287,6 @@ class Second_Ui_MainWindow(object):
         list = []
         other_arrays = []
         other_arrays_values = []
-        files_over_limit = []
-        files_below_limit = []
         row = 0
         #pass
         if self.comboBox_3.currentText() == '1':
@@ -352,10 +350,14 @@ class Second_Ui_MainWindow(object):
                 print(list[n])
                 files_over_limit.append(list[n])
 
+
             else:
                 print(x)
                 print(list[n])
                 files_below_limit.append(list[n])
+
+            #files_below_limit.append(files_below_limit)
+            #files_over_limit.append(files_over_limit)
 
             #print(other_arrays_values[i] + 'is greater')
             #print(np.max(other_arrays_values[n]) - np.min(other_arrays_values[n]))
@@ -370,6 +372,14 @@ class Second_Ui_MainWindow(object):
         print('For Loop Finished')
         print("These are the files over the limit" + str(files_over_limit))
         print("These are the files under the limit" + str(files_below_limit))
+
+        self.pushButton_4.setEnabled(True)
+
+
+        #return files_over_limit, files_below_limit
+
+        #files_below_limit = files_below_limit
+        #files_over_limit = files_over_limit
         #return files_over_limit, files_below_limit
 
         #list.remove(str(primary_array))
@@ -385,7 +395,23 @@ class Second_Ui_MainWindow(object):
         #print(list[0])
 
     def automateAudio(self):
-        pass
+        print(files_over_limit)
+        auto_edited_high = []
+        auto_edited_low = []
+        if len(files_over_limit) != 0:
+            for n in files_below_limit:
+                auto_edited_high.append(AudioSegment.from_wav(n))
+                print(n)
+        if len(files_below_limit) != 0:
+            for n in files_below_limit:
+                auto_edited_low.append(AudioSegment.from_wav(n))
+                print(n)
+
+
+
+
+
+
         #print(files_over_limit)
 
     def retranslateUi(self, MainWindow):
