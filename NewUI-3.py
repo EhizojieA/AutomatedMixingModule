@@ -12,6 +12,7 @@ from scipy.io import wavfile
 from secondwindow import Second_Ui_MainWindow
 import simpleaudio as sa
 import librosa
+import librosa.feature
 
 list = []
 track_array = np.empty([20, 20])
@@ -41,7 +42,7 @@ class Ui_MainWindow(object):
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 593)
+        MainWindow.resize(800, 600)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -222,6 +223,13 @@ class Ui_MainWindow(object):
     def clicker(self):
         #self.figure.clear()
         list = []
+        n_fft = 1024
+        hop_length = 320
+        window_type = 'hann'
+        mel_bins = 64
+        fmin =0
+        fmax = None
+
         fname = QFileDialog.getOpenFileNames(None, "Open File", "", "Wav Files (*.wav)")
         print(fname)
 
@@ -243,6 +251,7 @@ class Ui_MainWindow(object):
 
 
                 Fs, data = wavfile.read(n)
+                y, sr = librosa.load(n)
                 print(n)
                 print(len(data.shape))
 
@@ -278,16 +287,55 @@ class Ui_MainWindow(object):
                     #pic = QtGui.QPixmap(str(n) + '.png')
                     #self.tableWidget.setItemDelegate(0, pic)
 
-                    #plt.show()
+                    plt.show()
                     #self.tableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(plt.show()))
                     #self.tableWidget.setItem(n,0, fig)
                     #show = plt.show()
                     #self.figure = plt.show()
 
                 elif len(data.shape) == 1:
-                    plt.subplot(1, 1, 1)  # 2 rows, 1 column, first section
+                    #plt.subplot(1, 1, 1)  # 2 rows, 1 column, first section
                     plt.plot(t, mono_channel)
+                    plt.title('Wav file as array vs. time')
+                    plt.xlabel('time(s)')
+                    plt.ylabel('Amplitude')
                     plt.savefig(str(n) + '.png')
+                    #plt.show()
+                    plt.close()
+
+
+                    window = np.hanning(len(y))
+                    window_input = y * window
+
+                    #Discrete Fourier Transform
+                    dft = np.fft.rfft(window_input)
+                    amp = np.abs(dft)
+                    amp_db = librosa.amplitude_to_db(amp, ref=np.max)
+
+                    freq_bins = librosa.fft_frequencies(sr=sr, n_fft=len(y))
+                    plt.plot(freq_bins, amp_db)
+                    plt.xlabel("Frequency (Hz)")
+                    plt.ylabel("Amplitude (dB)")
+                    plt.xscale("log")
+                    plt.savefig(str(n)+'_freq.png')
+                    #plt.show()
+
+                    print(len(y))
+                    plt.close()
+
+
+                    Mel_spectogram = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=n_fft, hop_length=hop_length, win_length=n_fft,
+                                                                    window=window_type, n_mels = mel_bins, power= 2.0)
+                    Mel_spectogram_dB = librosa.power_to_db(Mel_spectogram, ref=np.max)
+                    spectogram = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length, win_length=n_fft, window=window_type)) ** 2
+                    librosa.display.specshow(Mel_spectogram_dB, sr=sr, x_axis='time', y_axis='mel', hop_length=hop_length)
+                    plt.colorbar(format = '%+2.0f dB')
+                    plt.title('Log Mel Spectogram')
+                    plt.tight_layout()
+                    plt.savefig(str(n) + '_Log-Mel.png')
+                    plt.show()
+
+                    #librosa.display.specshow(spectogram, sr=sr, x_axis='time', y_axis='linear', hop_length=hop_length)
                     #pic = QtGui.QPixmap(str(n) + '.png')
                     #self.tableWidget.setItemDelegate(0, pic)
 
@@ -314,6 +362,7 @@ class Ui_MainWindow(object):
                 row += 1
                 #print(self.tableWidget.)
 
+
         if self.Waveform_Tools != '':
             #self.Media_player.setMedia(QMediaContent(QUrl.fromLocalFile(filename)))
             self.Play_button.setEnabled(True)
@@ -325,6 +374,8 @@ class Ui_MainWindow(object):
             self.Rewind_button.setEnabled(True)
             self.New_window.setEnabled(True)
             self.Copy_to_new.setEnabled(True)
+
+        print(sr)
 
 
 
@@ -359,60 +410,18 @@ class Ui_MainWindow(object):
             pass
 
     def recordNew(self):
+        pass
 
-        CHUNK = 1024 * 2
-        FRAMES = 1024
-        FORMAT = pyaudio.paInt16
-        CHANNELS = 1
-        RATE = 44100
+    #    n_fft = 1024
+    #    hop_length = 320
+    #    window_type = 'hann'
 
-        # PyAudio chunk of code to read input from USB
-        audio = pyaudio.PyAudio()
-
-        ##Opening of audio stream
-        auStream = audio.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True,
-                              frames_per_buffer= CHUNK)
-        frames = []
-
-        fig, ax = plt.subplots()
-        x = np.arange(0, 2 * CHUNK, 2)
-        line, = ax.plot(x, np.random.rand(CHUNK), 'r')
-        ax.set_ylim(-60000, 60000)
-        ax.set_xlim(0, CHUNK)
-        fig.show()
-
-        # Same as R's Try, will perform the process below and check for an error
-        # if there is an error it will stop and present the error.
-        try:
-            while True:
-                data = auStream.read(FRAMES, exception_on_overflow=False)
-                frames.append(data)
-
-                auStream.start_stream()
-                mic_rec_data = auStream.read(CHUNK, exception_on_overflow=False)
-                mic_rec_int = struct.unpack(str(CHUNK) + 'h', mic_rec_data)
-                line.set_ydata(mic_rec_int)
-                fig.canvas.draw()
-                fig.canvas.flush_events()
-
-        # Will change the interrupt to another button later when User interface is established
-        # except ends the try block. Gives a condition when to stop.
-        except KeyboardInterrupt:
-
-            ##Closing audio stream
-            auStream.stop_stream()
-            auStream.close()
-            audio.terminate()
-
-            # Writing the sound file
-            soundfile = wave.open("SampleRecording.wav", "wb")
-            soundfile.setnchannels(CHANNELS)
-            soundfile.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
-            soundfile.setframerate(RATE)
-            soundfile.writeframes(b''.join(frames))
-            soundfile.close()
-            print("Finished Recording")
-            pass
+    #    filename = self.Waveform_Tools.selectedItems()
+        #print(filename)
+    #    for n in filename:
+    #        y, sr = librosa.load(n.text())
+    #        spectogram = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length, win_length=n_fft, window=window_type))**2
+    #        librosa.display.specshow(spectogram, sr=sr, x_axis='time', y_axis='linear', hop_length=hop_length)
 
         #p = pyaudio.PyAudio()
 

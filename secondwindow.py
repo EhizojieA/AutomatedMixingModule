@@ -20,8 +20,8 @@ import simpleaudio as sa
 import sounddevice as sd
 from pydub import AudioSegment
 #import math
-import soundfile as sf
-import ffmpeg
+#import soundfile as sf
+#import ffmpeg
 
 #AudioSegment.converter = '/Users/ehizojiealli/anaconda3/envs/AutomatedMixing/lib/python3.8/site-packages/ffmpeg'
 
@@ -395,17 +395,18 @@ class Second_Ui_MainWindow(object):
         #print(list[0])
 
     def automateAudio(self):
-        print(files_over_limit)
-        auto_edited_high = []
-        auto_edited_low = []
-        if len(files_over_limit) != 0:
-            for n in files_below_limit:
-                auto_edited_high.append(AudioSegment.from_wav(n))
-                print(n)
-        if len(files_below_limit) != 0:
-            for n in files_below_limit:
-                auto_edited_low.append(AudioSegment.from_wav(n))
-                print(n)
+        pass
+        #print(files_over_limit)
+        #auto_edited_high = []
+        #auto_edited_low = []
+        #if len(files_over_limit) != 0:
+        #    for n in files_below_limit:
+        #        auto_edited_high.append(AudioSegment.from_wav(n))
+        #        print(n)
+        #if len(files_below_limit) != 0:
+        #    for n in files_below_limit:
+        #        auto_edited_low.append(AudioSegment.from_wav(n))
+        #        print(n)
 
 
 
