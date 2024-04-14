@@ -216,7 +216,7 @@ class MainWindow(QMainWindow):
             self.audio_player.stop()
 
     def update_position_slider(self, position):
-        pass  # Placeholder method, no need to check for position_slider
+        pass  # Placeholder method, no need to check for position_slider stuff
 
 
 if __name__ == "__main__":
